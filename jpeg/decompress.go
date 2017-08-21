@@ -8,6 +8,7 @@ package jpeg
 #include "jpeg.h"
 
 void error_panic(j_common_ptr dinfo);
+void possible_error_panic(j_common_ptr cinfo, int msg_level);
 
 static struct jpeg_decompress_struct *new_decompress(void) {
 	struct jpeg_decompress_struct *dinfo = (struct jpeg_decompress_struct *)calloc(sizeof(struct jpeg_decompress_struct), 1);
@@ -22,7 +23,8 @@ static struct jpeg_decompress_struct *new_decompress(void) {
 	}
 
 	dinfo->err = jpeg_std_error(jerr);
-	jerr->error_exit = (void *)error_panic;
+	jerr->error_exit = error_panic;
+	jerr->emit_message = possible_error_panic;
 	jpeg_create_decompress(dinfo);
 
 	return dinfo;

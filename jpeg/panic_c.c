@@ -6,3 +6,7 @@ void error_panic(j_common_ptr cinfo) {
 	(*cinfo->err->format_message) (cinfo, buffer);
 	goPanic(buffer);
 }
+
+void possible_error_panic(j_common_ptr cinfo, int lvl) {
+	if (lvl == -1) error_panic(cinfo);
+}

@@ -7,13 +7,15 @@ package jpeg
 #include "jpeg.h"
 
 void error_panic(j_common_ptr cinfo);
+void possible_error_panic(j_common_ptr cinfo, int msg_level);
 
 static struct jpeg_compress_struct *new_compress(void) {
 	struct jpeg_compress_struct *cinfo = (struct jpeg_compress_struct *)calloc(sizeof(struct jpeg_compress_struct), 1);
 	struct jpeg_error_mgr *jerr = (struct jpeg_error_mgr *)calloc(sizeof(struct jpeg_error_mgr), 1);
 
 	jpeg_std_error(jerr);
-	jerr->error_exit = (void *)error_panic;
+	jerr->error_exit = error_panic;
+	jerr->emit_message = possible_error_panic;
 	jpeg_create_compress(cinfo);
 	cinfo->err = jerr;
 
