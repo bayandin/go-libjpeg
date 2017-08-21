@@ -147,8 +147,10 @@ func Decode(r io.Reader, options *DecoderOptions) (dest image.Image, err error) 
 	// Recover panic
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(error); !ok {
-				err = fmt.Errorf("JPEG error: %v", r)
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("JPEG decode error: %v", r)
 			}
 		}
 	}()
@@ -276,8 +278,10 @@ func DecodeIntoRGB(r io.Reader, options *DecoderOptions) (dest *rgb.Image, err e
 	// Recover panic
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(error); !ok {
-				err = fmt.Errorf("JPEG error: %v", r)
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("JPEG decode error: %v", r)
 			}
 		}
 	}()
@@ -305,8 +309,10 @@ func DecodeIntoRGBA(r io.Reader, options *DecoderOptions) (dest *image.RGBA, err
 	// Recover panic
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(error); !ok {
-				err = fmt.Errorf("JPEG error: %v", r)
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("JPEG decode error: %v", r)
 			}
 		}
 	}()
@@ -348,8 +354,10 @@ func DecodeConfig(r io.Reader) (config image.Config, err error) {
 	// Recover panic
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(error); !ok {
-				err = fmt.Errorf("JPEG error: %v", r)
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("JPEG decode error: %v", r)
 			}
 		}
 	}()

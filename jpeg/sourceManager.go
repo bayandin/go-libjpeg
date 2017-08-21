@@ -40,6 +40,7 @@ import (
 	"io"
 	"sync"
 	"unsafe"
+	"errors"
 )
 
 const readBufferSize = 16384
@@ -102,18 +103,10 @@ func sourceFill(dinfo *C.struct_jpeg_decompress_struct) C.boolean {
 	mgr.pub.bytes_in_buffer = C.size_t(bytes)
 	mgr.currentSize = bytes
 	mgr.pub.next_input_byte = (*C.JOCTET)(mgr.buffer)
-	if err == io.EOF {
-		if bytes == 0 {
-			if mgr.startOfFile {
-				releaseSourceManager(mgr)
-				panic("input is empty")
-			}
-			// EOF and need more data. Fill in a fake EOI to get a partial image.
-			footer := []byte{0xff, C.JPEG_EOI}
-			C.memcpy(mgr.buffer, unsafe.Pointer(&footer[0]), C.size_t(len(footer)))
-			mgr.pub.bytes_in_buffer = 2
+	if err != nil {
+		if err == io.EOF {
+			err = errors.New("truncated input")
 		}
-	} else if err != nil {
 		releaseSourceManager(mgr)
 		panic(err)
 	}
