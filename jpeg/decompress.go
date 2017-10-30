@@ -163,7 +163,7 @@ func Decode(r io.Reader, options *DecoderOptions) (dest image.Image, err error) 
 	switch dinfo.num_components {
 	case 1:
 		if dinfo.jpeg_color_space != C.JCS_GRAYSCALE {
-			return nil, errors.New("Image has unsupported colorspace")
+			return nil, fmt.Errorf("Image has unsupported colorspace: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 		}
 		dest, err = decodeGray(dinfo)
 	case 3:
@@ -173,9 +173,12 @@ func Decode(r io.Reader, options *DecoderOptions) (dest image.Image, err error) 
 		case C.JCS_RGB:
 			dest, err = decodeRGB(dinfo)
 		default:
-			return nil, errors.New("Image has unsupported colorspace")
+			return nil, fmt.Errorf("Image has unsupported colorspace: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 		}
+	default:
+		return nil, fmt.Errorf("Image has unsupported number of components: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 	}
+
 	return
 }
 
