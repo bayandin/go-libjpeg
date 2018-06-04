@@ -43,6 +43,15 @@ const (
 	DCTFloat DCTMethod = C.JDCT_FLOAT
 )
 
+type OutColorSpace int
+
+const (
+	OutColorSpaceSame OutColorSpace = 0
+	OutColorSpaceGray OutColorSpace = 1
+	OutColorSpaceRGB  OutColorSpace = 2
+	OutColorSpaceRGBA OutColorSpace = 3
+)
+
 func getJCS_EXT_RGBA() C.J_COLOR_SPACE {
 	return C.getJCS_EXT_RGBA()
 }

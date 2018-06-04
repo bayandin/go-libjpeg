@@ -125,6 +125,7 @@ func destroyDecompress(dinfo *C.struct_jpeg_decompress_struct) {
 type DecoderOptions struct {
 	ScaleTarget            image.Rectangle // ScaleTarget is the target size to scale image.
 	DCTMethod              DCTMethod       // DCTMethod is DCT Algorithm method.
+	OutColorSpace          OutColorSpace   // Selected output color space
 	DisableFancyUpsampling bool            // If true, disable fancy upsampling
 	DisableBlockSmoothing  bool            // If true, disable block smoothing
 }
@@ -165,13 +166,10 @@ func Decode(r io.Reader, options *DecoderOptions) (dest image.Image, err error) 
 		if dinfo.jpeg_color_space != C.JCS_GRAYSCALE {
 			return nil, fmt.Errorf("Image has unsupported colorspace: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 		}
-		dest, err = decodeGray(dinfo)
 	case 3:
 		switch dinfo.jpeg_color_space {
 		case C.JCS_YCbCr:
-			dest, err = decodeYCbCr(dinfo)
 		case C.JCS_RGB:
-			dest, err = decodeRGB(dinfo)
 		default:
 			return nil, fmt.Errorf("Image has unsupported colorspace: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 		}
@@ -179,10 +177,29 @@ func Decode(r io.Reader, options *DecoderOptions) (dest image.Image, err error) 
 		return nil, fmt.Errorf("Image has unsupported number of components: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 	}
 
+	switch dinfo.out_color_space {
+	case C.JCS_GRAYSCALE:
+		dest, err = decodeGray(dinfo)
+	case C.JCS_YCbCr:
+		dest, err = decodeYCbCr(dinfo)
+	case C.JCS_RGB:
+		dest, err = decodeRGB(dinfo)
+	default:
+		return nil, fmt.Errorf("Can't decode to out_color_space=%v", dinfo.out_color_space)
+	}
+
 	return
 }
 
 func decodeGray(dinfo *C.struct_jpeg_decompress_struct) (dest *image.Gray, err error) {
+
+	if dinfo.jpeg_color_space != dinfo.out_color_space {
+		C.jpeg_calc_output_dimensions(dinfo)
+		dest = image.NewGray(image.Rect(0, 0, int(dinfo.output_width), int(dinfo.output_height)))
+		readScanLines(dinfo, dest.Pix, dest.Stride)
+		return
+	}
+
 	// output dawnsampled raw data before starting decompress
 	dinfo.raw_data_out = C.TRUE
 
@@ -200,6 +217,11 @@ func decodeGray(dinfo *C.struct_jpeg_decompress_struct) (dest *image.Gray, err e
 }
 
 func decodeYCbCr(dinfo *C.struct_jpeg_decompress_struct) (dest *image.YCbCr, err error) {
+
+	if dinfo.jpeg_color_space != dinfo.out_color_space {
+		panic("can't decode YCbCr to anything else")
+	}
+
 	// output dawnsampled raw data before starting decompress
 	dinfo.raw_data_out = C.TRUE
 
@@ -369,8 +391,22 @@ func DecodeConfig(r io.Reader) (config image.Config, err error) {
 
 	C.jpeg_read_header(dinfo, C.TRUE)
 
+	var colorModel color.Model
+
+	switch dinfo.jpeg_color_space {
+	case C.JCS_GRAYSCALE:
+		colorModel = color.GrayModel
+	case C.JCS_RGB:
+		colorModel = rgb.ColorModel
+	case C.JCS_YCbCr:
+		colorModel = color.YCbCrModel
+	default:
+		err = fmt.Errorf("Image has unsupported colorspace: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
+		return
+	}
+
 	config = image.Config{
-		ColorModel: color.YCbCrModel,
+		ColorModel: colorModel,
 		Width:      int(dinfo.image_width),
 		Height:     int(dinfo.image_height),
 	}
@@ -394,6 +430,21 @@ func setupDecoderOptions(dinfo *C.struct_jpeg_decompress_struct, opt *DecoderOpt
 	}
 
 	dinfo.dct_method = C.J_DCT_METHOD(opt.DCTMethod)
+
+	switch opt.OutColorSpace {
+	case OutColorSpaceSame:
+		dinfo.out_color_space = dinfo.jpeg_color_space
+	case OutColorSpaceGray:
+		dinfo.out_color_space = C.JCS_GRAYSCALE
+	case OutColorSpaceRGB:
+		dinfo.out_color_space = C.JCS_RGB
+	case OutColorSpaceRGBA:
+		if !SupportRGBA() {
+			panic("RGBA color space not supported")
+		}
+		dinfo.out_color_space = getJCS_EXT_RGBA()
+	}
+
 	if opt.DisableFancyUpsampling {
 		dinfo.do_fancy_upsampling = C.FALSE
 	} else {
