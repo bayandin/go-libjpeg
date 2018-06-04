@@ -37,10 +37,10 @@ static void free_jpeg_source_mgr(struct jpeg_source_mgr *p) {
 import "C"
 
 import (
+	"errors"
 	"io"
 	"sync"
 	"unsafe"
-	"errors"
 )
 
 const readBufferSize = 16384
