@@ -125,7 +125,7 @@ func destroyDecompress(dinfo *C.struct_jpeg_decompress_struct) {
 type DecoderOptions struct {
 	ScaleTarget            image.Rectangle // ScaleTarget is the target size to scale image.
 	DCTMethod              DCTMethod       // DCTMethod is DCT Algorithm method.
-	OutColorSpace          OutColorSpace   // Selected output color space
+	OutColorSpace          OutColorSpace   // Output color space
 	DisableFancyUpsampling bool            // If true, disable fancy upsampling
 	DisableBlockSmoothing  bool            // If true, disable block smoothing
 }
