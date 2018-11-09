@@ -177,6 +177,11 @@ func Decode(r io.Reader, options *DecoderOptions) (dest image.Image, err error) 
 		return nil, fmt.Errorf("Image has unsupported number of components: num_components=%v, jpeg_color_space=%v", dinfo.num_components, dinfo.jpeg_color_space)
 	}
 
+	if SupportRGBA() && dinfo.out_color_space == getJCS_EXT_RGBA() {
+		dest, err = decodeRGBA(dinfo)
+		return
+	}
+
 	switch dinfo.out_color_space {
 	case C.JCS_GRAYSCALE:
 		dest, err = decodeGray(dinfo)
@@ -290,6 +295,15 @@ func decodeRGB(dinfo *C.struct_jpeg_decompress_struct) (dest *rgb.Image, err err
 	dest = rgb.NewImage(image.Rect(0, 0, int(dinfo.output_width), int(dinfo.output_height)))
 
 	dinfo.out_color_space = C.JCS_RGB
+	readScanLines(dinfo, dest.Pix, dest.Stride)
+	return
+}
+
+func decodeRGBA(dinfo *C.struct_jpeg_decompress_struct) (dest *image.RGBA, err error) {
+	C.jpeg_calc_output_dimensions(dinfo)
+	dest = image.NewRGBA(image.Rect(0, 0, int(dinfo.output_width), int(dinfo.output_height)))
+
+	dinfo.out_color_space = getJCS_EXT_RGBA()
 	readScanLines(dinfo, dest.Pix, dest.Stride)
 	return
 }
