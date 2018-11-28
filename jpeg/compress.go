@@ -46,7 +46,7 @@ static void encode_gray(j_compress_ptr cinfo, JSAMPROW pix, int stride) {
 	}
 }
 
-static void encode_rgba(j_compress_ptr cinfo, JSAMPROW pix, int stride) {
+static void encode_scanlines(j_compress_ptr cinfo, JSAMPROW pix, int stride) {
 	JSAMPROW rows[1];
 
 	int v;
@@ -88,6 +88,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"github.com/anight/go-libjpeg/rgb"
 	"image"
 	"io"
 	"unsafe"
@@ -125,6 +126,8 @@ func Encode(w io.Writer, src image.Image, opt *EncoderOptions) (err error) {
 		err = encodeYCbCr(cinfo, s, opt)
 	case *image.Gray:
 		err = encodeGray(cinfo, s, opt)
+	case *rgb.Image:
+		err = encodeRGB(cinfo, s, opt)
 	case *image.RGBA:
 		err = encodeRGBA(cinfo, s, opt)
 	default:
@@ -207,7 +210,25 @@ func encodeRGBA(cinfo *C.struct_jpeg_compress_struct, src *image.RGBA, p *Encode
 
 	// Start compression
 	C.jpeg_start_compress(cinfo, C.TRUE)
-	C.encode_rgba(cinfo, C.JSAMPROW(unsafe.Pointer(&src.Pix[0])), C.int(src.Stride))
+	C.encode_scanlines(cinfo, C.JSAMPROW(unsafe.Pointer(&src.Pix[0])), C.int(src.Stride))
+	C.jpeg_finish_compress(cinfo)
+	return
+}
+
+// encode rgb.Image
+func encodeRGB(cinfo *C.struct_jpeg_compress_struct, src *rgb.Image, p *EncoderOptions) (err error) {
+	// Set up compression parameters
+	cinfo.image_width = C.JDIMENSION(src.Bounds().Dx())
+	cinfo.image_height = C.JDIMENSION(src.Bounds().Dy())
+	cinfo.input_components = 3
+	cinfo.in_color_space = C.JCS_RGB
+
+	C.jpeg_set_defaults(cinfo)
+	setupEncoderOptions(cinfo, p)
+
+	// Start compression
+	C.jpeg_start_compress(cinfo, C.TRUE)
+	C.encode_scanlines(cinfo, C.JSAMPROW(unsafe.Pointer(&src.Pix[0])), C.int(src.Stride))
 	C.jpeg_finish_compress(cinfo)
 	return
 }
