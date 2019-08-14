@@ -32,17 +32,18 @@ static void encode_gray(j_compress_ptr cinfo, JSAMPROW pix, int stride) {
 	// Allocate JSAMPIMAGE to hold pointers to one iMCU worth of image data
 	// this is a safe overestimate; we use the return value from
 	// jpeg_read_raw_data to figure out what is the actual iMCU row count.
-	JSAMPROW *rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
+	const size_t n_rows = DCTSIZE * cinfo->comp_info[0].v_samp_factor;
+	JSAMPROW *rows = alloca(sizeof(JSAMPROW) * n_rows);
 
 	int v = 0;
 	for (v = 0; v < cinfo->image_height; ) {
 		// First fill in the pointers into the plane data buffers
 		int h = 0;
-		for (h = 0; h < DCTSIZE * cinfo->comp_info[0].v_samp_factor; h++) {
+		for (h = 0; h < n_rows; h++) {
 			rows[h] = &pix[stride * (v + h)];
 		}
 		// Get the data
-		v += jpeg_write_raw_data(cinfo, &rows, DCTSIZE * cinfo->comp_info[0].v_samp_factor);
+		v += jpeg_write_raw_data(cinfo, &rows, n_rows);
 	}
 }
 
@@ -61,24 +62,26 @@ static void encode_ycbcr(j_compress_ptr cinfo, JSAMPROW y_row, JSAMPROW cb_row, 
 	// Allocate JSAMPIMAGE to hold pointers to one iMCU worth of image data
 	// this is a safe overestimate; we use the return value from
 	// jpeg_read_raw_data to figure out what is the actual iMCU row count.
-	JSAMPROW *y_rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
-	JSAMPROW *cb_rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
-	JSAMPROW *cr_rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
+	const size_t n_y_rows = DCTSIZE * cinfo->comp_info[0].v_samp_factor;
+	const size_t n_c_rows = DCTSIZE * cinfo->comp_info[1].v_samp_factor;
+	JSAMPROW *y_rows = alloca(sizeof(JSAMPROW) * n_y_rows);
+	JSAMPROW *cb_rows = alloca(sizeof(JSAMPROW) * n_c_rows);
+	JSAMPROW *cr_rows = alloca(sizeof(JSAMPROW) * n_c_rows);
 	JSAMPARRAY image[] = { y_rows, cb_rows, cr_rows };
 
 	int v = 0;
 	for (v = 0; v < cinfo->image_height; ) {
 		int h = 0;
 		// First fill in the pointers into the plane data buffers
-		for (h = 0; h <  DCTSIZE * cinfo->comp_info[0].v_samp_factor; h++) {
+		for (h = 0; h <  n_y_rows; h++) {
 			y_rows[h] = &y_row[y_stride * (v + h)];
 		}
-		for (h = 0; h <  DCTSIZE * cinfo->comp_info[1].v_samp_factor; h++) {
+		for (h = 0; h < n_c_rows; h++) {
 			cb_rows[h] = &cb_row[c_stride * (v / color_v_div + h)];
 			cr_rows[h] = &cr_row[c_stride * (v / color_v_div + h)];
 		}
 		// Get the data
-		v += jpeg_write_raw_data(cinfo, image, DCTSIZE * cinfo->comp_info[0].v_samp_factor);
+		v += jpeg_write_raw_data(cinfo, image, n_y_rows);
 	}
 }
 
@@ -173,6 +176,8 @@ func encodeYCbCr(cinfo *C.struct_jpeg_compress_struct, src *image.YCbCr, p *Enco
 		compInfo[Cb].h_samp_factor, compInfo[Cb].v_samp_factor = 1, 1
 		compInfo[Cr].h_samp_factor, compInfo[Cr].v_samp_factor = 1, 1
 		colorVDiv = 2
+	default:
+		panic("unsupported src.SubsampleRatio")
 	}
 
 	// libjpeg raw data in is in planar format, which avoids unnecessary

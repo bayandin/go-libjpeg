@@ -54,14 +54,14 @@ static int DCT_v_scaled_size(j_decompress_ptr dinfo, int component) {
 }
 
 static void decode_gray(j_decompress_ptr dinfo, JSAMPROW pix, int stride, int imcu_rows) {
-	JSAMPROW *rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
+	JSAMPROW *rows = alloca(sizeof(JSAMPROW) * imcu_rows);
 	while (dinfo->output_scanline < dinfo->output_height) {
 		int h = 0;
 		for (h = 0; h < imcu_rows; h++) {
 			rows[h] = &pix[stride*(dinfo->output_scanline + h)];
 		}
 		// Get the data
-		jpeg_read_raw_data(dinfo, &rows, 2 * imcu_rows);
+		jpeg_read_raw_data(dinfo, &rows, imcu_rows);
 	}
 }
 
@@ -69,9 +69,9 @@ static void decode_ycbcr(j_decompress_ptr dinfo, JSAMPROW y_row, JSAMPROW cb_row
 	// Allocate JSAMPIMAGE to hold pointers to one iMCU worth of image data
 	// this is a safe overestimate; we use the return value from
 	// jpeg_read_raw_data to figure out what is the actual iMCU row count.
-	JSAMPROW *y_rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
-	JSAMPROW *cb_rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
-	JSAMPROW *cr_rows = alloca(sizeof(JSAMPROW) * ALIGN_SIZE);
+	JSAMPROW *y_rows = alloca(sizeof(JSAMPROW) * imcu_rows);
+	JSAMPROW *cb_rows = alloca(sizeof(JSAMPROW) * imcu_rows);
+	JSAMPROW *cr_rows = alloca(sizeof(JSAMPROW) * imcu_rows);
 	JSAMPARRAY image[] = { y_rows, cb_rows, cr_rows };
 
 	while (dinfo->output_scanline < dinfo->output_height) {
@@ -83,7 +83,7 @@ static void decode_ycbcr(j_decompress_ptr dinfo, JSAMPROW y_row, JSAMPROW cb_row
 			cr_rows[h] = &cr_row[c_stride*(dinfo->output_scanline/color_v_div+h)];
 		}
 		// Get the data
-		jpeg_read_raw_data(dinfo, image, 2 * imcu_rows);
+		jpeg_read_raw_data(dinfo, image, imcu_rows);
 	}
 }
 
@@ -205,7 +205,7 @@ func decodeGray(dinfo *C.struct_jpeg_decompress_struct) (dest *image.Gray, err e
 		return
 	}
 
-	// output dawnsampled raw data before starting decompress
+	// output downsampled raw data before starting decompress
 	dinfo.raw_data_out = C.TRUE
 
 	C.jpeg_start_decompress(dinfo)
@@ -227,7 +227,7 @@ func decodeYCbCr(dinfo *C.struct_jpeg_decompress_struct) (dest *image.YCbCr, err
 		panic("can't decode YCbCr to anything else")
 	}
 
-	// output dawnsampled raw data before starting decompress
+	// output downsampled raw data before starting decompress
 	dinfo.raw_data_out = C.TRUE
 
 	C.jpeg_start_decompress(dinfo)
