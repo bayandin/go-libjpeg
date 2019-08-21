@@ -11,8 +11,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pixiv/go-libjpeg/jpeg"
-	"github.com/pixiv/go-libjpeg/test/util"
+	"github.com/bayandin/go-libjpeg/jpeg"
+	"github.com/bayandin/go-libjpeg/test/util"
 )
 
 var naturalImageFiles = []string{

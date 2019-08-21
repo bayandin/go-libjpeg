@@ -145,7 +145,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/pixiv/go-libjpeg/rgb"
+	"github.com/bayandin/go-libjpeg/rgb"
 )
 
 // EncoderOptions specifies which settings to use during Compression.

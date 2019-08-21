@@ -1,8 +1,8 @@
 go-libjpeg
 ==========
 
-[![GoDoc](https://godoc.org/github.com/pixiv/go-libjpeg/jpeg?status.svg)](https://godoc.org/github.com/pixiv/go-libjpeg/jpeg)
-[![Build Status](https://travis-ci.org/pixiv/go-libjpeg.svg?branch=master)](https://travis-ci.org/pixiv/go-libjpeg)
+[![GoDoc](https://godoc.org/github.com/bayandin/go-libjpeg/jpeg?status.svg)](https://godoc.org/github.com/bayandin/go-libjpeg/jpeg)
+[![Build Status](https://travis-ci.org/bayandin/go-libjpeg.svg?branch=master)](https://travis-ci.org/bayandin/go-libjpeg)
 
 An implementation of Go binding for LibJpeg (preferably libjpeg-turbo).
 
@@ -12,7 +12,7 @@ and rewritten to compatible with image.Image interface.
 ## Usage
 
 ```
-import "github.com/pixiv/go-libjpeg/jpeg"
+import "github.com/bayandin/go-libjpeg/jpeg"
 
 func main() {
     // Decoding JPEG into image.Image
