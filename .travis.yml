@@ -14,7 +14,7 @@ env:
 
 before_install:
   - ./travis-install-libjpeg-turbo.sh "$TURBO_VER"
-  - cd $HOME/gopath/src/github.com/pixiv/go-libjpeg
+  - cd $HOME/gopath/src/github.com/bayandin/go-libjpeg
 
 script:
   - go test -a -test.v ./...

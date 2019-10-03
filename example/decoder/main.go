@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/anight/go-libjpeg/jpeg"
+	"github.com/bayandin/go-libjpeg/jpeg"
 )
 
 func main() {

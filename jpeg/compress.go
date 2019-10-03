@@ -91,7 +91,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"github.com/anight/go-libjpeg/rgb"
+	"github.com/bayandin/go-libjpeg/rgb"
 	"image"
 	"io"
 	"unsafe"

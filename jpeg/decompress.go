@@ -98,7 +98,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/anight/go-libjpeg/rgb"
+	"github.com/bayandin/go-libjpeg/rgb"
 )
 
 func newDecompress(r io.Reader) *C.struct_jpeg_decompress_struct {

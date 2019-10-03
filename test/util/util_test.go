@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/anight/go-libjpeg/test/util"
+	"github.com/bayandin/go-libjpeg/test/util"
 )
 
 func TestOpenFile(t *testing.T) {
