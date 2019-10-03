@@ -1,21 +1,43 @@
+dist: bionic
+
 language: go
 
 go:
-  - 1.6
-  - 1.7
-  - 1.8
-  - 1.9
-  - "1.10"
-  - tip
+  #  - 1.6
+  #  - 1.7
+  #  - 1.8
+  #  - 1.9
+  #  - "1.10.x"
+  #  - "1.11.x"
+  #  - "1.12.x"
+  - "1.13.x"
+#  - tip
 
 env:
-  - TURBO_VER=""
-  - TURBO_VER="1.5.1" CGO_LDFLAGS="-L/tmp/libjpeg-turbo/lib64" CGO_CPPFLAGS="-I/tmp/libjpeg-turbo/include" LD_LIBRARY_PATH="/tmp/libjpeg-turbo/lib64"
+  global:
+    - secure: "hP8Iyw/BXDNfdsrzXW0TwtMVt67mfJocp9kitS0OmOZU4+2Eo7/Af6pZZa4zA8eMt5gfiKEuJsGeQ0rOxwfr1kLGoNX8qcTT1WsV21VNgCcmcoKGSiHqBwwS045LQtKQExLA5GXynuYWPVNTtxqJqu/83WC1GCX6aOdh+qPxsVkE69+TJdOtrJaJI1NyS3Xjs1pD7+Hr9YHTthmnKhL7JLNRtzS/MKGw3fm7jvcL3/ps+p6Qv6zAdKlPs4X5tUavYJE4Y6uzOXjKIyGC+phlMrY8tCHQAUf0sqq6uaxYVN+fIx9RHc4GBdwaN5cp5dnxcx7FAMYUQtbDzG+j6cjTJ53MxcDXAEQvRfKZreTauYhbzwkzp44G0YMgV+GRuBCuedzEoE6co0rc4g2RtkVldZQhWKV9557Sp/80G5nB1Q9DuZ1rmFObpQ+8WQx6z3hBIZUk4jiht5GlyFDUlt9LJwDTTPfnTi1+9e4kEyG9RBVap0zUCYhJEEZGh9+OBzC1TOp+2sNPOp+vj9AMiTYlBPQdB8TWrjyptiXN3HAbo1tMfNH91i7T9qzar5kMVkipzGkSWLjYfXVXtrQqX3C2TrAFXTIaG1lJhGWwIPD/q7ZIyzIkKU5x2NeUq7BfAaiqnPhCyg9N9hrISqAnbDv2McmpWyd9jl8S7DDeAglmP1E="
+  matrix:
+    - TURBO_VER="2.0.3" CGO_LDFLAGS="-L/tmp/libjpeg-turbo/lib64" CGO_CPPFLAGS="-I/tmp/libjpeg-turbo/include" LD_LIBRARY_PATH="/tmp/libjpeg-turbo/lib64" PKG_CONFIG_PATH="/tmp/libjpeg-turbo/lib64/pkgconfig"
+#    - TURBO_VER="1.5.3" CGO_LDFLAGS="-L/tmp/libjpeg-turbo/lib64" CGO_CPPFLAGS="-I/tmp/libjpeg-turbo/include" LD_LIBRARY_PATH="/tmp/libjpeg-turbo/lib64"
+#    - TURBO_VER=""
 
 before_install:
   - ./travis-install-libjpeg-turbo.sh "$TURBO_VER"
-  - cd $HOME/gopath/src/github.com/bayandin/go-libjpeg
+  - cd $GOPATH/src/github.com/bayandin/go-libjpeg
 
 script:
   - go test -a -test.v ./...
   - cd jpeg && go test -a -bench . -benchtime 10s
+
+jobs:
+  include:
+    - stage: Build, Unit-Tests & Fuzz-Tests
+      go: 1.13.x
+      script:
+        - ./fuzzit.sh local-regression
+
+    - stage: Fuzzit (Fuzzing)
+      #      if: branch = master AND type IN (push)
+      go: 1.13.x
+      script:
+        - ./fuzzit.sh fuzzing
